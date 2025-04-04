@@ -1,0 +1,157 @@
+
+create policy "Enable read access for all users"
+on "public"."bible_promises"
+as PERMISSIVE
+for SELECT
+to public
+using (
+  true
+);
+
+https://supabase.com/dashboard/project/mldtimypnbudwihsnesc/auth/policies?schema=public&search=bible_promises
+
+
+
+CREATE TABLE music_files (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    artist VARCHAR(255),
+    album VARCHAR(255),
+    genre VARCHAR(50),
+    cover_url TEXT,
+    duration INTEGER, -- duration in seconds
+    file_url TEXT NOT NULL,
+    is_kids_content BOOLEAN DEFAULT FALSE, -- column to differentiate kids content
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+CREATE TABLE story_files (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    author VARCHAR(255),
+    cover_url TEXT,
+    genre VARCHAR(50),
+    duration INTEGER, -- duration in minutes
+    file_url TEXT NOT NULL,
+    is_kids_content BOOLEAN DEFAULT FALSE, -- column to differentiate kids content
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+Storage query used
+
+CREATE POLICY "Give users authenticated access to folder 1q2q05_0" ON storage.objects FOR SELECT TO authenticated p (bucket_id = 'music' AND (storage.foldername(name))[1] = 'private' AND auth.role() = 'authenticated');
+
+
+
+
+USE OPTIONS ABOVE TO EDIT
+
+
+create policy "Enable update for users based on email"
+
+
+on "public"."music_files"
+
+
+as PERMISSIVE
+
+
+for INSERT
+
+
+to public
+
+
+with check (
+
+7
+  (select auth.jwt()) ->> 'admin@godlync.com' = email
+
+);
+
+
+# Create table for media tags
+# tags: daily-meditation, children, message
+
+CREATE TABLE tags
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  author VARCHAR(255),
+
+
+CREATE TABLE media_tags (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO media_tags (name, description) VALUES
+  ('songs', 'Musical content including songs and music tracks'),
+  ('stories', 'Narrative content including personal or fictional stories'),
+  ('sermon', 'Religious sermons and teachings'),
+  ('message', 'General messages for audience engagement'),
+  ('wisdom', 'Content focused on life advice and wise sayings');
+
+create policy "policy_name"
+on "public"."media_tags"
+as PERMISSIVE
+for ALL
+to authenticated
+using (
+(( SELECT (auth.uid())::text AS uid) = '4dad034c-3d37-4676-ba37-a800c71bc258'::text)
+);
+
+
+CREATE TABLE content_types (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT
+);
+
+INSERT INTO content_types (name, description)
+VALUES
+    ('song', 'Audio file for music or instrumental tracks'),
+    ('story', 'Narrative audio or video content'),
+    ('message', 'Spoken word or podcast content'),
+    ('sermon', 'Religious or inspirational speech content'),
+    ('wisdom', 'Quotes, advice, or other insightful content');
+
+create policy "policy_name"
+on "public"."content_types"
+as PERMISSIVE
+for ALL
+to authenticated
+using (
+(( SELECT (auth.uid())::text AS uid) = '4dad034c-3d37-4676-ba37-a800c71bc258'::text)
+);
+
+
+# Profile Registration
+# The following Trigger inserts record into profiles table during signup
+
+create function public.handle_new_user() 
+returns trigger 
+as $$
+begin
+    insert into public.profiles (user_id, first_name, last_name, email)
+    values (
+        new.id, -- Changed from new.user_id to new.id
+        coalesce(new.raw_user_meta_data->>'first_name', ''), -- Ensure it's not NULL
+        coalesce(new.raw_user_meta_data->>'last_name', ''),
+        email
+    );
+    return new;
+exception when others then
+    raise warning 'Failed to insert profile for user_id: %', new.id;
+    return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_auth_user_created
+after insert on auth.users 
+for each row
+execute procedure public.handle_new_user();

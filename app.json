@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "GodLync",
+    "slug": "GodLync",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/godlync_icon_007.png",
+    "userInterfaceStyle": "light",
+    "scheme": "godlync",
+    "deepLinks": [
+      "reset-password",
+      "new-password"
+    ],
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "web": {
+      "favicon": "./assets/image.png"
+    },
+    "ios": {
+      "bundleIdentifier": "com.godlync.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio",
+          "audio"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/4.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.godlync.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3f4bfc62-c2c4-4bf4-9cc6-455c99258a21"
+      }
+    },
+    "owner": "slfam4u"
+  }
+}

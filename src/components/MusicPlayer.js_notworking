@@ -1,0 +1,133 @@
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, Pressable, StyleSheet, Modal } from 'react-native';
+import Slider from '@react-native-community/slider';
+import TrackPlayer, { usePlaybackState, useProgress } from 'react-native-track-player';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+
+const MusicPlayer = ({ file, isPlayerVisible, togglePlayerCollapse }) => {
+  const playbackState = usePlaybackState();
+  const { position, duration } = useProgress();
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    const setupPlayer = async () => {
+      await TrackPlayer.setupPlayer();
+      await TrackPlayer.add({
+        id: file.id,
+        url: file.url,
+        title: file.name,
+        artist: file.artist,
+        artwork: file.cover_url,
+      });
+    };
+
+    setupPlayer();
+
+    return () => {
+      TrackPlayer.destroy();
+    };
+  }, [file]);
+
+  const togglePlayback = async () => {
+    if (playbackState === TrackPlayer.STATE_PLAYING) {
+      await TrackPlayer.pause();
+      setIsPlaying(false);
+    } else {
+      await TrackPlayer.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const seekTo = async (value) => {
+    await TrackPlayer.seekTo(value);
+  };
+
+  return (
+    <Modal visible={isPlayerVisible} animationType="slide" transparent={true}>
+      <View style={styles.container}>
+        {isPlayerVisible ? (
+          <View style={styles.collapsedContent}>
+            <Image source={{ uri: file.cover_url }} style={styles.collapsedCoverImage} />
+            <View style={styles.collapsedTextContainer}>
+              <Text style={styles.songTitle}>{file.name}</Text>
+              <Text style={styles.songArtist}>{file.artist}</Text>
+            </View>
+            <Pressable onPress={togglePlayback} style={styles.playButton}>
+              <Icon name={isPlaying ? "pause" : "play-arrow"} size={30} color="#1DB954" />
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.sheetContent}>
+            <Image source={{ uri: file.cover_url }} style={styles.coverImage} />
+            <Text style={styles.songTitle}>{file.name}</Text>
+            <Text style={styles.songArtist}>{file.artist}</Text>
+            <Slider
+              style={styles.slider}
+              value={position}
+              minimumValue={0}
+              maximumValue={duration}
+              onSlidingComplete={seekTo}
+            />
+            <View style={styles.controls}>
+              <Pressable onPress={togglePlayback}>
+                <Icon name={isPlaying ? "pause-circle-filled" : "play-circle-filled"} size={50} color="#1DB954" />
+              </Pressable>
+            </View>
+          </View>
+        )}
+      </View>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  collapsedContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#fff',
+  },
+  collapsedCoverImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  collapsedTextContainer: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  songTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  songArtist: {
+    fontSize: 14,
+    color: '#666',
+  },
+  playButton: {
+    padding: 10,
+  },
+  sheetContent: {
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  coverImage: {
+    width: 200,
+    height: 200,
+    alignSelf: 'center',
+  },
+  slider: {
+    marginVertical: 20,
+  },
+  controls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+});
+
+export default MusicPlayer;
